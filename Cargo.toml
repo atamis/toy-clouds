@@ -1,0 +1,8 @@
+[package]
+name = "clouds"
+version = "0.1.0"
+authors = ["Andrew Amis <atamiser@gmail.com>"]
+
+[dependencies]
+pancurses = "0.16"
+noise = "0.5.1"
