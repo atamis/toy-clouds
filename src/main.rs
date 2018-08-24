@@ -23,6 +23,7 @@ use pancurses::{
 };
 use noise::Perlin;
 use noise::NoiseFn;
+use std::env;
 
 use std::time::{Duration, Instant};
 
@@ -131,6 +132,7 @@ fn initialize_colors() {
     init_pair(3, COLOR_BLACK, COLOR_WHITE);
     init_pair(4, COLOR_RED, COLOR_MAGENTA);
 
+    // Greyscale characters
     init_pair(10, 0, 0);
     init_pair(11, 235, 0);
     init_pair(12, 237, 0);
@@ -143,18 +145,15 @@ fn initialize_colors() {
     init_pair(19, 251, 0);
     init_pair(20, 253, 0);
 
+    // Terrain backgrounds
     init_pair(30, 7, 38); // water
     init_pair(31, 7, 228); // beach
     init_pair(32, 7, 70); // grass
     init_pair(33, 7, 247); // stone
     init_pair(34, 7, 7); // snow
-
-    //for c in 0..59 {
-        //init_pair(c, c, c);
-    //}
 }
 
-fn draw_colors(w: &Window) {
+/*fn draw_colors(w: &Window) {
     let (starty, startx) = w.get_beg_yx();
     let (maxy, maxx) = w.get_max_yx();
 
@@ -171,11 +170,30 @@ fn draw_colors(w: &Window) {
         w.attron(COLOR_PAIR(y as u64));
         w.mvprintw(starty + y, startx, format!("{:}", y));
     }
+}*/
+
+fn parse_args() -> Box<CellWriter> {
+    let args: Vec<String> = env::args().collect();
+    let error = || {
+        panic!("Wrong args: clouds [clouds|terrain]?")
+    };
+
+    match args.len() {
+        1 => Box::new(CloudWriter {}),
+        2 => {
+            match args[1].as_ref() {
+                "clouds" => Box::new(CloudWriter{}),
+                "terrain" => Box::new(TerrainWriter{}),
+                _ => error()
+            }
+        },
+        _ => error()
+    }
 }
 
 fn main() {
     let window = initscr();
-    let mut writer = TerrainWriter{};
+    let mut writer = parse_args();
     let mut state: i32 = 0;
 
     window.keypad(true);
@@ -191,7 +209,7 @@ fn main() {
             last_inc = Instant::now();
         }
 
-        draw(&window, &mut writer, state);
+        draw(&window, &mut *writer, state);
         //draw_colors(&window);
         match window.getch() {
             Some(Input::KeyResize) => {
